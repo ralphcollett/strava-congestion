@@ -3,12 +3,13 @@ package stravacongestion
 import java.net.URL
 import java.time.Duration
 
+import io.circe.parser._
 import org.apache.http.client.utils.URIBuilder
 import simplehttp.HttpClients.anApacheClient
 import simplehttp.configuration.AccessToken.accessToken
 import simplehttp.configuration.HttpTimeout.httpTimeout
 import simplehttp.configuration.OAuthCredentials.oAuth
-
+import stravacongestion.domain.{BoundCoords, Segments}
 import scala.io.Source
 
 object TestApp extends App {
@@ -29,7 +30,7 @@ object TestApp extends App {
 
   val response = client.get(url)
   if (response.ok())
-    println(response.getContent.asString())
+    decode[Segments](response.getContent.asString()).left.map(error => error.printStackTrace()).foreach(println)
   else
     println(s"Unexpected reply ${response.getStatusCode} ${response.getStatusMessage}")
 
