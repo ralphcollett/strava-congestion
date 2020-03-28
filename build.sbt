@@ -1,4 +1,4 @@
-name := "strava-congestion"
+name := "stravacongestion"
 
 version := "0.1"
 
