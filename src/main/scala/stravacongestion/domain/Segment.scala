@@ -2,12 +2,12 @@ package stravacongestion.domain
 
 import io.circe.{Decoder, HCursor}
 
-case class Segment(id: Int, resourceState: ResourceState, name: String, climbCategory: Int, climbCategoryDesc: String, averageGrade: Double, startLatLong: BoundCoords, endLatLon: BoundCoords, elev_difference: Double, distance: Double, points: String, starred: Boolean)
+case class Segment(id: SegmentId, resourceState: ResourceState, name: String, climbCategory: Int, climbCategoryDesc: String, averageGrade: Double, startLatLong: BoundCoords, endLatLon: BoundCoords, elev_difference: Double, distance: Double, points: String, starred: Boolean)
 
 object Segment {
 
   implicit val segmentDecoder: Decoder[Segment] = (c: HCursor) => for {
-    id <- c.downField("id").as[Int]
+    id <- c.downField("id").as[SegmentId]
     resourceState <- c.downField("resource_state").as[ResourceState]
     name <- c.downField("name").as[String]
     climbCategory <- c.downField("climb_category").as[Int]
