@@ -3,6 +3,8 @@ package stravacongestion
 import java.net.URL
 import java.time.Duration
 
+import cats.implicits._
+import io.circe.Decoder
 import io.circe.parser.decode
 import org.apache.http.client.utils.URIBuilder
 import simplehttp.HttpClients.anApacheClient
@@ -17,26 +19,26 @@ class Strava(accessTokenString: String) {
   private val client = anApacheClient().`with`(credentials).`with`(httpTimeout(Duration.ofMinutes(1)))
 
   def segments(southWest: BoundCoords, northEast: BoundCoords): Either[StravaError, Segments] = {
-    val url = buildUri(exploreSegmentsResource,
+    get[Segments](buildUri(exploreSegmentsResource,
       List(("bounds", s"${southWest.latitude},${southWest.longitude},${northEast.latitude},${northEast.longitude}"),
         ("activity_type", "running")
       )
-    )
-    val response = client.get(url)
-    if (response.ok())
-      decode[Segments](response.getContent.asString()).left.map(JsonParseError.apply)
-    else
-      Left(StravaIntegrationError(s"Unexpected reply ${response.getStatusCode} ${response.getStatusMessage}"))
+    ))
   }
 
-  def leaderboard(segmentId: SegmentId): Either[StravaError, Unit] = {
-    val url = buildUri(leaderBoardResource(segmentId),
-      List(("date_range", "this_week"), ("per_page", "200")))
+  def leaderboard(segmentId: SegmentId): Either[StravaError, Leaderboard] = {
+    Range(1, 50).toList.map(
+      pageNumber => get[Leaderboard](buildUri(leaderBoardResource(segmentId),
+        List(("date_range", "this_week"), ("page", pageNumber.toString), ("per_page", "200"))))
+    ).sequence.map(_.reduce(_.merge(_)))
+  }
+
+  private def get[A: Decoder](url: URL): Either[StravaError, A] = {
     val response = client.get(url)
-    println(response.getStatusCode)
-    println(response.getStatusMessage)
-    println(response.getContent.asString())
-    Right(())
+    if (response.ok())
+      decode[A](response.getContent.asString()).left.map(JsonParseError.apply)
+    else
+      Left(StravaIntegrationError(s"Unexpected reply ${response.getStatusCode} ${response.getStatusMessage}"))
   }
 
   private val baseUri = "https://www.strava.com/api/v3/"
