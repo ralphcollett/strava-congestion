@@ -27,7 +27,7 @@ class Strava(accessTokenString: String) {
   }
 
   def leaderboard(segmentId: SegmentId): Either[StravaError, Leaderboard] = {
-    Range(1, 50).toList.map(
+    Range(1, 20).toList.map(
       pageNumber => get[Leaderboard](buildUri(leaderBoardResource(segmentId),
         List(("date_range", "this_week"), ("page", pageNumber.toString), ("per_page", "200"))))
     ).sequence.map(_.reduce(_.merge(_)))
